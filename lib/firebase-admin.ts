@@ -3,6 +3,15 @@ import { getDatabase } from "firebase-admin/database";
 
 let adminApp: App;
 
+export function hasFirebaseAdminConfig(): boolean {
+  return Boolean(
+    process.env.FIREBASE_PROJECT_ID &&
+      process.env.FIREBASE_CLIENT_EMAIL &&
+      process.env.FIREBASE_PRIVATE_KEY &&
+      process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL
+  );
+}
+
 function getAdminApp(): App {
   if (getApps().length > 0) {
     return getApps()[0];

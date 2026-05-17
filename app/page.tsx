@@ -12,7 +12,7 @@ import { LiveClock } from "@/components/LiveClock";
 import { Wifi, WifiOff, RefreshCw } from "lucide-react";
 
 const IS_DEMO = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID === "demo-cafeteria";
-const SCHOOL_NAME = process.env.NEXT_PUBLIC_SCHOOL_NAME ?? "급식줄알리미";
+const SCHOOL_NAME = process.env.NEXT_PUBLIC_SCHOOL_NAME ?? "수완고등학교";
 const AVG_SERVE_SECONDS = Number(process.env.NEXT_PUBLIC_AVG_SERVE_SECONDS ?? 10);
 
 export default function Home() {
@@ -28,6 +28,7 @@ export default function Home() {
   const displayedWaitingCount = data
     ? Math.ceil(waitState.remainingSeconds / AVG_SERVE_SECONDS)
     : 0;
+  const isDemoMode = IS_DEMO || data?._demo;
 
   useEffect(() => {
     if (!data) return;
@@ -169,7 +170,7 @@ export default function Home() {
             </p>
 
             {/* ⑤ 로컬 데모 패널 */}
-            {IS_DEMO && (
+            {isDemoMode && (
               <DemoPanel
                 currentCount={displayedWaitingCount}
                 onDirectSet={(count) => {

@@ -1,5 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAdminDatabase } from "@/lib/firebase-admin";
+import { getAdminDatabase, hasFirebaseAdminConfig } from "@/lib/firebase-admin";
+
+declare global {
+  // eslint-disable-next-line no-var
+  var __demoWaitingCount: number | undefined;
+}
+
+function getDemoCount(): number {
+  if (typeof global.__demoWaitingCount === "undefined") {
+    global.__demoWaitingCount = 0;
+  }
+  return global.__demoWaitingCount;
+}
+
+function setDemoCount(count: number) {
+  global.__demoWaitingCount = Math.max(0, count);
+}
 
 // Arduino/ESP32가 호출하는 엔드포인트
 // GET /api/sensor?type=enter&key=SECRET  → 대기 인원 +1
@@ -23,6 +39,19 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    if (!hasFirebaseAdminConfig()) {
+      const current = getDemoCount();
+      const updated = type === "enter" ? current + 1 : Math.max(0, current - 1);
+      setDemoCount(updated);
+
+      return NextResponse.json({
+        success: true,
+        type,
+        waitingCount: updated,
+        _demo: true,
+      });
+    }
+
     const db = getAdminDatabase();
     const ref = db.ref("cafeteria/waitingCount");
 
