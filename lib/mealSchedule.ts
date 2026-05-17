@@ -1,3 +1,5 @@
+import { getMealTimeSettings } from "@/lib/adminSettings";
+
 export type MealType = "lunch" | "dinner";
 
 export interface MealPeriod {
@@ -12,6 +14,7 @@ export interface MealStatus {
   currentMeal: MealType | null;
   nextMeal: MealPeriod | null;
   secondsUntilNext: number | null;
+  secondsUntilMealEnd: number | null;
 }
 
 function parseTime(hhmm: string): { hours: number; minutes: number } {
@@ -25,25 +28,29 @@ function toMinutes(hhmm: string): number {
 }
 
 export function getMealPeriods(): MealPeriod[] {
+  const s = getMealTimeSettings();
   return [
-    {
-      type: "lunch",
-      label: "점심",
-      start: process.env.NEXT_PUBLIC_LUNCH_START ?? "11:30",
-      end: process.env.NEXT_PUBLIC_LUNCH_END ?? "13:30",
-    },
-    {
-      type: "dinner",
-      label: "저녁",
-      start: process.env.NEXT_PUBLIC_DINNER_START ?? "17:30",
-      end: process.env.NEXT_PUBLIC_DINNER_END ?? "19:00",
-    },
+    { type: "lunch", label: "점심", start: s.lunchStart, end: s.lunchEnd },
+    { type: "dinner", label: "저녁", start: s.dinnerStart, end: s.dinnerEnd },
   ];
+}
+
+/** KST(Asia/Seoul) 기준으로 현재 시·분을 분 단위로 반환 */
+function getKSTMinutes(date: Date): number {
+  const parts = new Intl.DateTimeFormat("ko-KR", {
+    timeZone: "Asia/Seoul",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).formatToParts(date);
+  const h = Number(parts.find((p) => p.type === "hour")?.value ?? "0");
+  const m = Number(parts.find((p) => p.type === "minute")?.value ?? "0");
+  return h * 60 + m;
 }
 
 export function getMealStatus(now?: Date): MealStatus {
   const date = now ?? new Date();
-  const currentMinutes = date.getHours() * 60 + date.getMinutes();
+  const currentMinutes = getKSTMinutes(date);
   const periods = getMealPeriods();
 
   // 현재 급식 시간인지 확인
@@ -56,6 +63,7 @@ export function getMealStatus(now?: Date): MealStatus {
         currentMeal: period.type,
         nextMeal: null,
         secondsUntilNext: null,
+        secondsUntilMealEnd: (end - currentMinutes) * 60,
       };
     }
   }
@@ -84,6 +92,7 @@ export function getMealStatus(now?: Date): MealStatus {
     currentMeal: null,
     nextMeal: closestNext,
     secondsUntilNext: minSeconds * 60,
+    secondsUntilMealEnd: null,
   };
 }
 

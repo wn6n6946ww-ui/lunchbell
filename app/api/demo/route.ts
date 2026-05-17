@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getMealStatus } from "@/lib/mealSchedule";
+import { getMealStatus, getMealPeriods } from "@/lib/mealSchedule";
 import { calcEstimatedWaitSeconds } from "@/lib/waitTime";
 
 /**
@@ -32,6 +32,11 @@ export async function GET() {
   const waitingCount = getCount();
   const mealStatus = getMealStatus();
   const estimatedWaitSeconds = calcEstimatedWaitSeconds(waitingCount);
+  const periods = getMealPeriods();
+  const mealSchedule = {
+    lunch:  { start: periods[0].start, end: periods[0].end },
+    dinner: { start: periods[1].start, end: periods[1].end },
+  };
 
   return NextResponse.json({
     waitingCount,
@@ -40,6 +45,8 @@ export async function GET() {
     currentMeal: mealStatus.currentMeal,
     nextMeal: mealStatus.nextMeal,
     secondsUntilNext: mealStatus.secondsUntilNext,
+    secondsUntilMealEnd: mealStatus.secondsUntilMealEnd,
+    mealSchedule,
     updatedAt: new Date().toISOString(),
     _demo: true,
   });

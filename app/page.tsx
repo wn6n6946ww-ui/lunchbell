@@ -8,6 +8,7 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { CountdownTimer } from "@/components/CountdownTimer";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { DemoPanel } from "@/components/DemoPanel";
+import { MealEndCountdown } from "@/components/MealEndCountdown";
 import { LiveClock } from "@/components/LiveClock";
 import { Wifi, WifiOff, RefreshCw } from "lucide-react";
 
@@ -144,6 +145,15 @@ export default function Home() {
               <StatusBadge count={displayedWaitingCount} />
             </div>
 
+            {/* 급식 시간표 */}
+            {data.mealSchedule && (
+              <p className="text-center text-xs text-muted-foreground/60">
+                점심 {data.mealSchedule.lunch.start} ~ {data.mealSchedule.lunch.end}
+                &nbsp;&nbsp;·&nbsp;&nbsp;
+                석식 {data.mealSchedule.dinner.start} ~ {data.mealSchedule.dinner.end}
+              </p>
+            )}
+
             {/* ② 급식 시간 외 — 카운트다운 (급식 중에는 숨김) */}
             {!data.isOpen && (
               <div className="rounded-2xl border border-border bg-card shadow-sm">
@@ -154,7 +164,15 @@ export default function Home() {
               </div>
             )}
 
-            {/* ③ 대기 인원 + 예상 시간 — 항상 표시 */}
+            {/* ③ 급식 종료까지 남은 시간 (급식 중에만 표시) */}
+            {data.isOpen && data.secondsUntilMealEnd !== null && (
+              <MealEndCountdown
+                initialSeconds={data.secondsUntilMealEnd}
+                mealLabel={data.currentMeal === "lunch" ? "점심" : "저녁"}
+              />
+            )}
+
+            {/* ④ 대기 인원 + 예상 시간 — 항상 표시 */}
             <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
               <WaitingCounter count={displayedWaitingCount} />
             </div>
@@ -163,13 +181,13 @@ export default function Home() {
               <EstimatedTime seconds={waitState.remainingSeconds} />
             </div>
 
-            {/* ④ 마지막 센서 업데이트 시각 */}
+            {/* ⑤ 마지막 센서 업데이트 시각 */}
             <p className="text-center text-xs text-muted-foreground">
               마지막 업데이트:{" "}
               {new Date(data.updatedAt).toLocaleTimeString("ko-KR")}
             </p>
 
-            {/* ⑤ 로컬 데모 패널 */}
+            {/* ⑥ 로컬 데모 패널 */}
             {isDemoMode && (
               <DemoPanel
                 currentCount={displayedWaitingCount}

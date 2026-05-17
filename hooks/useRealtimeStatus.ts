@@ -3,6 +3,11 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import type { MealPeriod, MealType } from "@/lib/mealSchedule";
 
+export interface MealSchedule {
+  lunch: { start: string; end: string };
+  dinner: { start: string; end: string };
+}
+
 export interface StatusData {
   waitingCount: number;
   estimatedWaitSeconds: number;
@@ -10,6 +15,8 @@ export interface StatusData {
   currentMeal: MealType | null;
   nextMeal: MealPeriod | null;
   secondsUntilNext: number | null;
+  secondsUntilMealEnd: number | null;
+  mealSchedule: MealSchedule;
   updatedAt: string;
   _demo?: boolean;
 }

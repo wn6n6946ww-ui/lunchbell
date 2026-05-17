@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAdminDatabase, hasFirebaseAdminConfig } from "@/lib/firebase-admin";
-import { getMealStatus } from "@/lib/mealSchedule";
+import { getMealStatus, getMealPeriods } from "@/lib/mealSchedule";
 import { calcEstimatedWaitSeconds } from "@/lib/waitTime";
 
 export const dynamic = "force-dynamic";
@@ -22,6 +22,12 @@ export async function GET() {
   try {
     const mealStatus = getMealStatus();
 
+    const periods = getMealPeriods();
+    const mealSchedule = {
+      lunch:  { start: periods[0].start, end: periods[0].end },
+      dinner: { start: periods[1].start, end: periods[1].end },
+    };
+
     if (!hasFirebaseAdminConfig()) {
       const waitingCount = getDemoCount();
 
@@ -32,6 +38,8 @@ export async function GET() {
         currentMeal: mealStatus.currentMeal,
         nextMeal: mealStatus.nextMeal,
         secondsUntilNext: mealStatus.secondsUntilNext,
+        secondsUntilMealEnd: mealStatus.secondsUntilMealEnd,
+        mealSchedule,
         updatedAt: new Date().toISOString(),
         _demo: true,
         warning: "Firebase 환경변수가 없어 데모 상태로 실행 중입니다.",
@@ -40,10 +48,10 @@ export async function GET() {
 
     const db = getAdminDatabase();
     const snapshot = await db.ref("cafeteria").get();
-    const data = snapshot.val() ?? {};
+    const dbData = snapshot.val() ?? {};
 
-    const waitingCount: number = Math.max(0, data.waitingCount ?? 0);
-    const updatedAt: string = data.updatedAt ?? new Date().toISOString();
+    const waitingCount: number = Math.max(0, dbData.waitingCount ?? 0);
+    const updatedAt: string = dbData.updatedAt ?? new Date().toISOString();
     const estimatedWaitSeconds = calcEstimatedWaitSeconds(waitingCount);
 
     return NextResponse.json({
@@ -53,6 +61,8 @@ export async function GET() {
       currentMeal: mealStatus.currentMeal,
       nextMeal: mealStatus.nextMeal,
       secondsUntilNext: mealStatus.secondsUntilNext,
+      secondsUntilMealEnd: mealStatus.secondsUntilMealEnd,
+      mealSchedule,
       updatedAt,
     });
   } catch (err) {
